@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - {{ profile.candidate_name if profile else 'Profile' }}{% endblock %}
+
+{% block content %}
+    {% if profile %}
+        <h2>Edit Profile: {{ profile.candidate_name }}</h2>
+        <p><em>Part of Batch: {{ profile.batch.uploaded_filename }} ({{ profile.batch.submission_date.strftime('%Y-%m-%d') }}) by {{profile.batch.submitter.username}}</em></p>
+    {% else %}
+        <h2>Edit Profile</h2>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('main.edit_profile', profile_id=profile.id if profile else 0) }}">
+        {{ form.hidden_tag() }} {# CSRF protection token #}
+        
+        <div class="form-group">
+            {{ form.candidate_name.label }}<br>
+            {{ form.candidate_name() }}
+            {% if form.candidate_name.errors %}<ul class="form-errors">{% for e in form.candidate_name.errors %}<li>{{e}}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.profile_activity_date.label }}<br>
+            {{ form.profile_activity_date() }}
+            {% if form.profile_activity_date.errors %}<ul class="form-errors">{% for e in form.profile_activity_date.errors %}<li>{{e}}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.position.label }}<br>
+            {{ form.position() }}
+            {% if form.position.errors %}<ul class="form-errors">{% for e in form.position.errors %}<li>{{e}}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.client.label }}<br>
+            {{ form.client() }}
+            {% if form.client.errors %}<ul class="form-errors">{% for e in form.client.errors %}<li>{{e}}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.contact_number.label }}<br>
+            {{ form.contact_number() }}
+            {% if form.contact_number.errors %}<ul class="form-errors">{% for e in form.contact_number.errors %}<li>{{e}}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.email_id.label }}<br>
+            {{ form.email_id() }}
+            {% if form.email_id.errors %}<ul class="form-errors">{% for e in form.email_id.errors %}<li>{{e}}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.total_experience.label }}<br>
+            {{ form.total_experience() }}
+            {% if form.total_experience.errors %}<ul class="form-errors">{% for e in form.total_experience.errors %}<li>{{e}}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.current_ctc.label }}<br>
+            {{ form.current_ctc() }}
+            {% if form.current_ctc.errors %}<ul class="form-errors">{% for e in form.current_ctc.errors %}<li>{{e}}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.expected_ctc.label }}<br>
+            {{ form.expected_ctc() }}
+            {% if form.expected_ctc.errors %}<ul class="form-errors">{% for e in form.expected_ctc.errors %}<li>{{e}}</li>{% endfor %}</ul>{% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.notice_period.label }}<br>
+            {{ form.notice_period() }}
+            {% if form.notice_period.errors %}<ul class="form-errors">{% for e in form.notice_period.errors %}<li>{{e}}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.feedback.label }}<br>
+            {{ form.feedback(rows=4) }} {# TextAreaField, rows=4 suggests initial height #}
+            {% if form.feedback.errors %}<ul class="form-errors">{% for e in form.feedback.errors %}<li>{{e}}</li>{% endfor %}</ul>{% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.submit() }}
+            <a href="{{ url_for('main.manage_batch_profiles', batch_id=profile.submission_batch_id if profile else 0) }}" class="secondary outline" role="button" style="margin-left: 10px;">Cancel</a>
+        </div>
+    </form>
+{% endblock %}

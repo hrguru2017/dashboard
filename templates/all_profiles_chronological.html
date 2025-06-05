@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %} {# Will use dynamic title from route #}
+
+{% block content %}
+    <article>
+        <header>
+            <h2>{{ title }}</h2> {# Will use dynamic title from route #}
+        </header>
+
+        {% if profiles and profiles|length > 0 %}
+            <div style="overflow-x: auto;"> 
+                <table class="profile-details-table">
+                    <thead>
+                        <tr>
+                            <th>Candidate Name</th>
+                            <th>Position</th>
+                            <th>Client</th>
+                            <th>Profile Activity Date</th>
+                            <th>Email</th>
+                            <th>Contact</th>
+                            <th>Experience</th>
+                            <th>Current CTC</th>
+                            <th>Expected CTC</th>
+                            <th>Notice Period</th>
+                            <th>Feedback</th>
+                            <th>Uploaded By (Batch User)</th>
+                            <th>Batch Upload Date</th>
+                            {# Consider adding Edit/Delete links here too if managers need quick access from this view #}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for profile in profiles %} {# profiles is pagination.items #}
+                        <tr>
+                            <td>{{ profile.candidate_name if profile.candidate_name else 'N/A' }}</td>
+                            <td>{{ profile.position if profile.position else 'N/A' }}</td>
+                            <td>{{ profile.client if profile.client else 'N/A' }}</td>
+                            <td>{{ profile.profile_activity_date.strftime('%Y-%m-%d') if profile.profile_activity_date else 'N/A' }}</td>
+                            <td>{{ profile.email_id if profile.email_id else 'N/A' }}</td>
+                            <td>{{ profile.contact_number if profile.contact_number else 'N/A' }}</td>
+                            <td>{{ profile.total_experience if profile.total_experience else 'N/A' }}</td>
+                            <td>{{ profile.current_ctc if profile.current_ctc else 'N/A' }}</td>
+                            <td>{{ profile.expected_ctc if profile.expected_ctc else 'N/A' }}</td>
+                            <td>{{ profile.notice_period if profile.notice_period else 'N/A' }}</td>
+                            <td>{{ profile.feedback if profile.feedback else 'N/A' }}</td> {# <-- ADDED CELL #}
+                            <td>{{ profile.batch.submitter.username if profile.batch and profile.batch.submitter else 'N/A' }}</td>
+                            <td>{{ profile.batch.submission_date.strftime('%Y-%m-%d') if profile.batch else 'N/A' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {# Pagination Links #}
+            {% if pagination %}
+            <nav aria-label="Pagination">
+                <ul class="pagination" style="list-style: none; padding: 0; display: flex; justify-content: center; gap: 0.5rem; margin-top:1.5rem;">
+                    {% if pagination.has_prev %}
+                        <li><a href="{{ url_for('main.profile_history', page=pagination.prev_num) }}" role="button" class="outline">Previous</a></li>
+                    {% else %}
+                        <li><button class="outline" disabled>Previous</button></li>
+                    {% endif %}
+
+                    {% for p_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                        {% if p_num %}
+                            {% if pagination.page == p_num %}
+                                <li><button aria-current="page">{{ p_num }}</button></li>
+                            {% else %}
+                                <li><a href="{{ url_for('main.profile_history', page=p_num) }}" role="button" class="outline">{{ p_num }}</a></li>
+                            {% endif %}
+                        {% else %}
+                            <li><span class="ellipsis">&hellip;</span></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                        <li><a href="{{ url_for('main.profile_history', page=pagination.next_num) }}" role="button" class="outline">Next</a></li>
+                    {% else %}
+                        <li><button class="outline" disabled>Next</button></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            <p style="text-align: center; font-size: 0.9em;">
+                Page {{ pagination.page }} of {{ pagination.pages }}. Total Matching Profiles: {{ pagination.total }}
+            </p>
+            {% endif %}
+
+        {% else %}
+            <p>No profiles found matching your criteria.</p>
+        {% endif %}
+        
+        <footer>
+            <a href="{{ url_for('main.dashboard') }}" role="button" class="secondary">Back to Dashboard</a>
+        </footer>
+    </article>
+{% endblock %}

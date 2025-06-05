@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Daily Submissions{% endblock %}</title>
+    {# Pico.css linked BEFORE your custom style.css #}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@latest/css/pico.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {# Add Chart.js CDN - This is correctly placed #}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="container-fluid">
+        {# Left-aligned links group #}
+        <ul>
+            <li><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+            {% if current_user.is_authenticated %}
+                <li><a href="{{ url_for('main.create_submission') }}">Log Profile Submission</a></li>
+                <li><a href="{{ url_for('main.profile_history') }}">Profile History</a></li>
+                {% if current_user.role == 'manager' %}
+                    <li><a href="{{ url_for('main.monthly_report') }}">Monthly Report</a></li>
+                    <li><a href="{{ url_for('main.create_user') }}">Create User</a></li>
+                {% endif %}
+            {% endif %}
+        </ul>
+        {# Right-aligned links/info group #}
+        <ul>
+            {% if current_user.is_authenticated %}
+                <li><span class="user-info">Welcome, {{ current_user.username }}!</span></li>
+                <li><a href="{{ url_for('auth.logout') }}" role="button" class="secondary outline">Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('auth.login') }}" role="button">Login</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flash-messages">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    {# ADD THIS EMPTY BLOCK FOR SCRIPTS, JUST BEFORE THE CLOSING BODY TAG #}
+    {% block scripts %}
+    {% endblock %}
+
+</body>
+</html>

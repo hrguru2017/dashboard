@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Report - Daily Submissions{% endblock %}
+
+{% block content %}
+    <h2>Monthly Submissions Report</h2>
+
+    <form method="POST" action="{{ url_for('main.monthly_report') }}">
+        {# ... (month/year selection form remains the same) ... #}
+    </form>
+
+    {% if report_data %}
+        <hr>
+        <h3>Report for: {{ report_data.period_display_name }}</h3>
+        <p><strong>Total Profiles Submitted in Period: {{ report_data.total_profiles_count }}</strong></p>
+
+        {# --- CHARTS SECTION --- #}
+        <div class="grid"> {# Using Pico's grid for side-by-side charts if space allows #}
+            {% if report_data.daily_trend_chart_data %}
+            <article>
+                <header><strong>Daily Submission Trend</strong></header>
+                <canvas id="dailySubmissionsChart"></canvas>
+            </article>
+            {% endif %}
+
+            {% if report_data.client_pie_chart_data and report_data.client_pie_chart_data.labels|length > 0 %}
+            <article>
+                <header><strong>Profile Distribution by Client</strong></header>
+                <canvas id="clientDistributionPieChart"></canvas> {# New canvas for pie chart #}
+            </article>
+            {% endif %}
+        </div>
+        {# --- END CHARTS SECTION --- #}
+
+        {% if report_data.profile_details_list and report_data.profile_details_list|length > 0 %}
+            <h4 style="margin-top: 2rem;">Detailed Profile Submissions for {{ report_data.period_display_name }}:</h4>
+            {# ... (existing table for profile_details_list remains the same) ... #}
+        {% elif report_data.total_profiles_count == 0 %}
+             <p>No profiles found for this period.</p>
+        {% endif %}
+    {% elif form.is_submitted() and not form.errors %} 
+        <hr>
+        <p>No profiles found for the selected period.</p>
+    {% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }} 
+    {% if report_data %}
+        {# Script for Daily Submissions Bar Chart #}
+        {% if report_data.daily_trend_chart_data %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const dailyTrendCtx = document.getElementById('dailySubmissionsChart');
+                if (dailyTrendCtx) {
+                    const dailyTrendData = {{ report_data.daily_trend_chart_data|tojson }};
+                    new Chart(dailyTrendCtx.getContext('2d'), {
+                        type: 'bar',
+                        data: {
+                            labels: dailyTrendData.labels,
+                            datasets: [{
+                                label: 'Profiles Submitted per Day',
+                                data: dailyTrendData.data,
+                                backgroundColor: 'rgba(92, 184, 92, 0.3)', 
+                                borderColor: 'rgba(92, 184, 92, 1)',   
+                                borderWidth: 1
+                            }]
+                        },
+                        options: { /* ... bar chart options as before ... */ 
+                            responsive: true, maintainAspectRatio: true,
+                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }}},
+                            plugins: { legend: { display: true, position: 'top'}, title: { display: true, text: `Daily Profile Submissions for ${dailyTrendData.month_name} ${dailyTrendData.year}`}}
+                        }
+                    });
+                }
+            });
+        </script>
+        {% endif %}
+
+        {# NEW Script for Client Distribution Pie Chart #}
+        {% if report_data.client_pie_chart_data and report_data.client_pie_chart_data.labels|length > 0 %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const pieCtx = document.getElementById('clientDistributionPieChart');
+                if (pieCtx) {
+                    const pieData = {{ report_data.client_pie_chart_data|tojson }};
+                    new Chart(pieCtx.getContext('2d'), {
+                        type: 'pie', // or 'doughnut'
+                        data: {
+                            labels: pieData.labels,
+                            datasets: [{
+                                label: 'Profile Distribution by Client',
+                                data: pieData.data,
+                                backgroundColor: pieData.backgroundColors,
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Profile Distribution by Client'
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        </script>
+        {% endif %}
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Daily Submissions{% endblock %}
+
+{% block content %}
+    <h2>Dashboard</h2>
+    {% if current_user.is_authenticated %}
+        <p>Hello, {{ current_user.username }}!</p> 
+        
+        {% if current_user.role == 'manager' %}
+            {% if current_month_total is not none %} 
+            <div style="padding: 10px; margin-bottom: 20px; background-color: var(--pico-muted-background-color, #e9ecef); border-radius: var(--pico-border-radius);">
+                <h4>Current Month's Insights</h4>
+                <p><strong>Total Profiles Submitted This Month: {{ current_month_total }}</strong></p>
+            </div>
+            {% endif %}
+            <h3>All Team Submission Batches</h3>
+        {% else %} 
+            <h3>Your Recent Submission Batches</h3>
+        {% endif %}
+        
+        {% if submissions %} {# 'submissions' here are SubmissionBatch objects #}
+            <table class="dashboard-table"> 
+                <thead>
+                    <tr>
+                        <th>Batch Date</th>
+                        {% if current_user.role == 'manager' %}
+                            <th>Submitted By</th>
+                        {% endif %}
+                        <th>Filename</th>
+                        <th>Profiles in Batch</th>
+                        <th>Processed On (UTC)</th>
+                        <th class="actions-column-header">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for batch in submissions %}
+                    <tr>
+                        <td>{{ batch.submission_date.strftime('%Y-%m-%d') }}</td>
+                        {% if current_user.role == 'manager' %}
+                            <td>{{ batch.submitter.username if batch.submitter else 'N/A' }}</td>
+                        {% endif %}
+                        <td>{{ batch.uploaded_filename }}</td>
+                        <td>{{ batch.number_of_profiles }}</td>
+                        <td>{{ batch.processed_timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td class="actions-cell"> {# Using class for consistent styling if needed #}
+                            {% if batch.user_id == current_user.id %}
+                                <a href="{{ url_for('main.manage_batch_profiles', batch_id=batch.id) }}" 
+                                   role="button" class="outline secondary action-button edit-button">Manage Profiles</a>
+                                
+                                {# ADDED Delete Batch Form/Button #}
+                                <form method="POST" action="{{ url_for('main.delete_submission_batch', batch_id=batch.id) }}" class="action-form delete-form"
+                                      onsubmit="return confirm('Are you sure you want to delete this ENTIRE batch and all its profiles? This action cannot be undone.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" role="button" class="outline contrast action-button delete-button">Delete Batch</button>
+                                </form>
+
+                            {% elif current_user.role == 'manager' %} 
+                                <a href="{{ url_for('main.manage_batch_profiles', batch_id=batch.id) }}" 
+                                   role="button" class="outline secondary action-button edit-button">View Profiles</a>
+                                {# Managers deleting other users' batches could be added here if desired #}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            {% if current_user.role == 'manager' %}
+                <p>No submission batches found for the team yet.</p>
+            {% else %}
+                <p>You haven't uploaded any profile sheets yet. <a href="{{ url_for('main.create_submission') }}" role="button">Upload one now!</a></p>
+            {% endif %}
+        {% endif %}
+    {% else %}
+        <p>Please <a href="{{ url_for('auth.login') }}" role="button">login</a> to see the dashboard.</p>
+    {% endif %}
+{% endblock %}

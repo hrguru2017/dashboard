@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Report - Daily Submissions{% endblock %}
+
+{% block content %}
+    <h2>Monthly Submissions Report</h2>
+
+    <form method="POST" action="{{ url_for('main.monthly_report') }}">
+        {{ form.hidden_tag() }}
+        <fieldset style="margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; width: fit-content;">
+            <legend>Select Period</legend>
+            <div class="form-group" style="display: inline-block; margin-right: 15px;">
+                {{ form.year.label }}<br>
+                {{ form.year(size=5) }}
+                {% if form.year.errors %}<ul class="form-errors">{% for e in form.year.errors %}<li>{{e}}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="form-group" style="display: inline-block; margin-right: 15px;">
+                {{ form.month.label }}<br>
+                {{ form.month() }}
+                {% if form.month.errors %}<ul class="form-errors">{% for e in form.month.errors %}<li>{{e}}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="form-group" style="display: inline-block; vertical-align: bottom;">
+                {{ form.submit() }}
+            </div>
+        </fieldset>
+    </form>
+
+    {% if report_data %} {# This block only renders if report_data is not None (i.e., after form submission with data) #}
+        <hr>
+        <h3>Report for: {{ report_data.period_display_name }}</h3>
+        <p><strong>Total Profiles Submitted in Period: {{ report_data.total_profiles_count }}</strong></p>
+        
+        {# --- CHARTS SECTION --- #}
+        <div class="grid"> 
+            {% if report_data.daily_trend_chart_data %}
+            <article>
+                <header><strong>Daily Submission Trend</strong></header>
+                <canvas id="dailySubmissionsChart"></canvas>
+            </article>
+            {% endif %}
+
+            {% if report_data.client_pie_chart_data and report_data.client_pie_chart_data.labels|length > 0 %}
+            <article>
+                <header><strong>Profile Distribution by Client</strong></header>
+                <canvas id="clientDistributionPieChart"></canvas> 
+            </article>
+            {% endif %}
+        </div>
+        {# --- END CHARTS SECTION --- #}
+
+        {% if report_data.profile_details_list and report_data.profile_details_list|length > 0 %}
+            <h4 style="margin-top: 2rem;">Detailed Profile Submissions for {{ report_data.period_display_name }}:</h4>
+            <table class="dashboard-table"> 
+                <thead>
+                    <tr>
+                        <th>Activity Date</th>
+                        <th>Position</th>
+                        <th>Client</th>
+                        <th>Candidate Name</th>
+                        <th>Contact Number</th>
+                        <th>Email ID</th>
+                        <th>Total Experience</th>
+                        <th>Current CTC</th>
+                        <th>Expected CTC</th>
+                        <th>Notice Period</th>
+                        <th>Feedback</th>
+                        <th>Uploaded By (Batch User)</th>
+                        <th>Batch Date (Upload Date)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for profile in report_data.profile_details_list %}
+                    <tr>
+                        <td>{{ profile.profile_activity_date.strftime('%Y-%m-%d') if profile.profile_activity_date else 'N/A' }}</td>
+                        <td>{{ profile.position if profile.position else 'N/A' }}</td>
+                        <td>{{ profile.client if profile.client else 'N/A' }}</td>
+                        <td>{{ profile.candidate_name if profile.candidate_name else 'N/A' }}</td>
+                        <td>{{ profile.contact_number if profile.contact_number else 'N/A' }}</td>
+                        <td>{{ profile.email_id if profile.email_id else 'N/A' }}</td>
+                        <td>{{ profile.total_experience if profile.total_experience else 'N/A' }}</td>
+                        <td>{{ profile.current_ctc if profile.current_ctc else 'N/A' }}</td>
+                        <td>{{ profile.expected_ctc if profile.expected_ctc else 'N/A' }}</td>
+                        <td>{{ profile.notice_period if profile.notice_period else 'N/A' }}</td>
+                        <td>{{ profile.feedback if profile.feedback else 'N/A' }}</td>
+                        <td>{{ profile.batch.submitter.username if profile.batch and profile.batch.submitter else 'N/A' }}</td>
+                        <td>{{ profile.batch.submission_date.strftime('%Y-%m-%d') if profile.batch else 'N/A' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% elif report_data.total_profiles_count == 0 %}
+             <p>No profiles found for this period.</p>
+        {% endif %}
+    {% elif form.is_submitted() and not form.errors %} 
+        <hr>
+        <p>No profiles found for the selected period (form submitted but no data).</p>
+    {% endif %}
+
+{% endblock %}
+
+{# Script block for charts #}
+{% block scripts %}
+    {{ super() }} 
+    {% if report_data %} {# Script should only run if report_data exists #}
+        {# Script for Daily Submissions Bar Chart #}
+        {% if report_data.daily_trend_chart_data %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const dailyTrendCtx = document.getElementById('dailySubmissionsChart');
+                if (dailyTrendCtx) {
+                    const dailyTrendData = {{ report_data.daily_trend_chart_data|tojson }};
+                    new Chart(dailyTrendCtx.getContext('2d'), {
+                        type: 'bar',
+                        data: { /* ... bar chart data ... */ 
+                            labels: dailyTrendData.labels,
+                            datasets: [{
+                                label: 'Profiles Submitted per Day',
+                                data: dailyTrendData.data,
+                                backgroundColor: 'rgba(92, 184, 92, 0.3)', 
+                                borderColor: 'rgba(92, 184, 92, 1)',   
+                                borderWidth: 1
+                            }]
+                        },
+                        options: { /* ... bar chart options ... */ 
+                            responsive: true, maintainAspectRatio: true,
+                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }}},
+                            plugins: { legend: { display: true, position: 'top'}, title: { display: true, text: `Daily Profile Submissions for ${dailyTrendData.month_name} ${dailyTrendData.year}`}}
+                        }
+                    });
+                }
+            });
+        </script>
+        {% endif %}
+
+        {# Script for Client Distribution Pie Chart #}
+        {% if report_data.client_pie_chart_data and report_data.client_pie_chart_data.labels|length > 0 %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const pieCtx = document.getElementById('clientDistributionPieChart');
+                if (pieCtx) {
+                    const pieData = {{ report_data.client_pie_chart_data|tojson }};
+                    new Chart(pieCtx.getContext('2d'), {
+                        type: 'pie', 
+                        data: { /* ... pie chart data ... */
+                            labels: pieData.labels,
+                            datasets: [{
+                                label: 'Profile Distribution by Client',
+                                data: pieData.data,
+                                backgroundColor: pieData.backgroundColors,
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: { /* ... pie chart options ... */
+                            responsive: true, maintainAspectRatio: true,
+                            plugins: { legend: { position: 'top'}, title: { display: true, text: 'Profile Distribution by Client'}}
+                        }
+                    });
+                }
+            });
+        </script>
+        {% endif %}
+    {% endif %} {# End of if report_data for script block #}
+{% endblock %}

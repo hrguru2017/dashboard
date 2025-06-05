@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+    <article>
+        <header>
+            <h2>Profiles in Batch: {{ batch.uploaded_filename if batch else 'N/A' }}</h2>
+            {% if batch %}
+            <p>
+                Submitted by: <strong>{{ batch.submitter.username if batch.submitter else 'N/A' }}</strong> 
+                on <strong>{{ batch.submission_date.strftime('%Y-%m-%d') if batch.submission_date else 'N/A' }}</strong>
+                <br>
+                Total Profiles in this batch: <strong>{{ batch.number_of_profiles }}</strong>
+            </p>
+            {% endif %}
+        </header>
+        
+        {% if profiles and profiles|length > 0 %}
+            <div style="overflow-x: auto;"> 
+                <table class="profile-details-table">
+                    <thead>
+                        <tr>
+                            <th>Candidate Name</th>
+                            <th>Position</th>
+                            <th>Client</th>
+                            <th>Activity Date</th>
+                            <th>Email</th>
+                            <th>Contact</th>
+                            <th>Experience</th>
+                            <th>Current CTC</th>
+                            <th>Expected CTC</th>
+                            <th>Notice Period</th>
+                            <th>Feedback</th>
+                            {% if batch and (batch.user_id == current_user.id or current_user.role == 'manager') %}
+                            <th class="actions-column-header">Actions</th> {# Optional class for header if needed #}
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for profile in profiles %}
+                        <tr>
+                            <td>{{ profile.candidate_name if profile.candidate_name else 'N/A' }}</td>
+                            <td>{{ profile.position if profile.position else 'N/A' }}</td>
+                            <td>{{ profile.client if profile.client else 'N/A' }}</td>
+                            <td>{{ profile.profile_activity_date.strftime('%Y-%m-%d') if profile.profile_activity_date else 'N/A' }}</td>
+                            <td>{{ profile.email_id if profile.email_id else 'N/A' }}</td>
+                            <td>{{ profile.contact_number if profile.contact_number else 'N/A' }}</td>
+                            <td>{{ profile.total_experience if profile.total_experience else 'N/A' }}</td>
+                            <td>{{ profile.current_ctc if profile.current_ctc else 'N/A' }}</td>
+                            <td>{{ profile.expected_ctc if profile.expected_ctc else 'N/A' }}</td>
+                            <td>{{ profile.notice_period if profile.notice_period else 'N/A' }}</td>
+                            <td>{{ profile.feedback if profile.feedback else 'N/A' }}</td> 
+                            {% if batch and (batch.user_id == current_user.id or current_user.role == 'manager') %}
+                            <td class="actions-cell"> {# Using a class for the cell #}
+                                <a href="{{ url_for('main.edit_profile', profile_id=profile.id) }}" 
+                                   role="button" class="outline secondary action-button edit-button">Edit</a>
+                                
+                                <form method="POST" action="{{ url_for('main.delete_profile', profile_id=profile.id) }}" class="action-form delete-form"
+                                      onsubmit="return confirm('Are you sure you want to delete this profile? This action cannot be undone.');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" role="button" class="outline contrast action-button delete-button">Delete</button>
+                                </form>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>No individual profiles found in this batch, or the batch might be empty.</p>
+        {% endif %}
+        
+        <footer>
+            <a href="{{ url_for('main.dashboard') }}" role="button" class="secondary">Back to Dashboard</a>
+        </footer>
+    </article>
+{% endblock %}
