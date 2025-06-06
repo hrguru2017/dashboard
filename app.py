@@ -25,11 +25,15 @@ def create_app():
         os.makedirs(app.instance_path, exist_ok=True)
     except OSError as e:
         app.logger.warning(f"Could not create instance folder at {app.instance_path}: {e}")
+    
+    # Use DATABASE_URL environment variable for production, fallback to SQLite for local development
+    # This pattern allows you to develop with SQLite locally and deploy with Postgres easily
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+        'DATABASE_URL',
+        f'sqlite:///{os.path.join(app.instance_path, "submissions.sqlite")}' # Fallback for local development
+    )
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Keep this
 
-    db_filename = 'submissions.sqlite'
-    db_path = os.path.join(app.instance_path, db_filename)
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     app.config['UPLOAD_FOLDER'] = os.path.join(app.instance_path, 'uploads')
     try:
