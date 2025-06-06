@@ -373,9 +373,9 @@ def profile_history():
 @main_bp.route('/users/create', methods=['GET', 'POST'])
 #@login_required
 def create_user():
-    if current_user.role != 'manager':
-        flash('You do not have permission to perform this action.', 'danger')
-        return redirect(url_for('main.dashboard'))
+    #if current_user.role != 'manager':
+    #    flash('You do not have permission to perform this action.', 'danger')
+    #    return redirect(url_for('main.dashboard'))
     form = UserCreationForm()
     if form.validate_on_submit():
         username = form.username.data
