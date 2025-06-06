@@ -65,7 +65,7 @@ def create_app():
     # --- Create Database Tables ---
     with app.app_context():
         db.create_all()
-        print(f"APP.PY (create_app): Database tables ensured/created at {db_path}. PID: {os.getpid()}")
+        #print(f"APP.PY (create_app): Database tables ensured/created at {db_path}. PID: {os.getpid()}")
 
     print(f"APP.PY (create_app): App creation complete. Returning app instance {id(app)}. PID: {os.getpid()}")
     return app
