@@ -371,7 +371,7 @@ def profile_history():
                            pagination=pagination)
 
 @main_bp.route('/users/create', methods=['GET', 'POST'])
-@login_required
+#@login_required
 def create_user():
     if current_user.role != 'manager':
         flash('You do not have permission to perform this action.', 'danger')
